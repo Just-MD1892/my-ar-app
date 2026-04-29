@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "homepage": "https://Just-MD.github.io/my-ar-app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist"
   },
   "devDependencies": {
