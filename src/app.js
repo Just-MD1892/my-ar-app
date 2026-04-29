@@ -1,80 +1,99 @@
 import * as THREE from 'three'
-
 window.THREE = THREE
 
-// ---------------------------------------------------------
-// Custom pipeline module — sets up the Three.js scene
-// ---------------------------------------------------------
+// Define your image target from code — no dashboard needed
+const imageTarget = {
+  imagePath: './marker.png',  // your image in public/
+  metadata: {},
+  name: 'my-marker',
+  type: 'PLANAR',
+  properties: {
+    left: 0,
+    top: 0,
+    width: 480,
+    height: 640,
+    originalWidth: 480,
+    originalHeight: 640,
+    isRotated: false,
+  }
+}
+
 const initScenePipelineModule = () => {
-  let scene, camera, renderer, cube
+  let cube
 
   return {
     name: 'my-ar-scene',
 
-    onStart: ({ canvas, canvasWidth, canvasHeight }) => {
-      // Get the Three.js scene and camera created by XR8.Threejs.pipelineModule()
-      const { scene: xrScene, camera: xrCamera, renderer: xrRenderer } =
-        XR8.Threejs.xrScene()
+    onStart: () => {
+      const { scene } = XR8.Threejs.xrScene()
 
-      scene = xrScene
-      camera = xrCamera
-      renderer = xrRenderer
+      // Lighting
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6))
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
+      dirLight.position.set(1, 2, 1)
+      scene.add(dirLight)
 
-      // Add lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
-      scene.add(ambientLight)
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
-      directionalLight.position.set(1, 2, 1)
-      scene.add(directionalLight)
-
-      // Add a simple cube to the scene
+      // Object to show on the marker
       const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1)
       const material = new THREE.MeshStandardMaterial({ color: 0x00aaff })
       cube = new THREE.Mesh(geometry, material)
-      cube.position.set(0, 0, -0.5) // Place it 0.5m in front of camera
+      cube.visible = false  // hide until marker is found
       scene.add(cube)
 
-      // Allow tap to place / interact
-      canvas.addEventListener('touchstart', () => {
-        cube.material.color.set(0xff6600) // Change colour on tap
+      // Listen for image target events
+      window.addEventListener('xrimagefound', ({ detail }) => {
+        if (detail.name === 'my-marker') {
+          cube.position.copy(detail.position)
+          cube.quaternion.copy(detail.rotation)
+          cube.scale.setScalar(detail.scale)
+          cube.visible = true
+        }
+      })
+
+      window.addEventListener('xrimageupdated', ({ detail }) => {
+        if (detail.name === 'my-marker') {
+          cube.position.copy(detail.position)
+          cube.quaternion.copy(detail.rotation)
+          cube.scale.setScalar(detail.scale)
+        }
+      })
+
+      window.addEventListener('xrimagelost', ({ detail }) => {
+        if (detail.name === 'my-marker') {
+          cube.visible = false
+        }
       })
     },
 
     onRender: () => {
-      // Runs every frame — good place for animations
-      if (cube) {
+      if (cube && cube.visible) {
         cube.rotation.y += 0.01
       }
     },
   }
 }
 
-// ---------------------------------------------------------
-// Boot 8th Wall once the engine is loaded
-// ---------------------------------------------------------
 const onxrloaded = () => {
+  // Register the image target from code
+  XR8.XrController.configure({
+    imageTargetData: [imageTarget]
+  })
+
   XR8.addCameraPipelineModules([
-    XR8.GlTextureRenderer.pipelineModule(),   // Draws the camera feed
-    XR8.Threejs.pipelineModule(),             // Creates the Three.js AR scene
-    XR8.XrController.pipelineModule(),        // Enables SLAM world tracking
-    XRExtras.FullWindowCanvas.pipelineModule(), // Makes canvas fill the window
-    XRExtras.Loading.pipelineModule(),        // Loading screen on startup
-    XRExtras.RuntimeError.pipelineModule(),   // Shows error on crash
-    initScenePipelineModule(),                // Your custom scene
+    XR8.GlTextureRenderer.pipelineModule(),
+    XR8.Threejs.pipelineModule(),
+    XR8.XrController.pipelineModule(),
+    XRExtras.FullWindowCanvas.pipelineModule(),
+    XRExtras.Loading.pipelineModule(),
+    XRExtras.RuntimeError.pipelineModule(),
+    initScenePipelineModule(),
   ])
 
-  // Insert the camera canvas into the page
-  document.body.insertAdjacentHTML(
-    'beforeend',
-    '<canvas id="camerafeed"></canvas>'
-  )
-
+  document.body.insertAdjacentHTML('beforeend', '<canvas id="camerafeed"></canvas>')
   XR8.run({
     canvas: document.getElementById('camerafeed'),
     allowedDevices: XR8.XrConfig.device().ANY,
   })
 }
 
-// Wait for the engine to be ready before starting
 window.XR8 ? onxrloaded() : window.addEventListener('xrloaded', onxrloaded)
