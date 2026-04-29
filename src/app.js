@@ -25,6 +25,8 @@ const initScenePipelineModule = () => {
     name: 'my-ar-scene',
 
     onStart: () => {
+
+        console.log('AR scene started')
       const { scene } = XR8.Threejs.xrScene()
 
       // Lighting
@@ -42,6 +44,7 @@ const initScenePipelineModule = () => {
 
       // Listen for image target events
       window.addEventListener('xrimagefound', ({ detail }) => {
+        console.log('Image found:', detail.name)
         if (detail.name === 'my-marker') {
           cube.position.copy(detail.position)
           cube.quaternion.copy(detail.rotation)
