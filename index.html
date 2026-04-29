@@ -7,13 +7,19 @@
       * { margin: 0; padding: 0; }
       canvas { display: block; }
     </style>
+
+    <!-- 8th Wall engine via CDN -->
+    <script 
+      async 
+      src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" 
+      crossorigin="anonymous"
+      data-preload-chunks="slam">
+    </script>
+
+    <!-- XRExtras utilities (loading screen, error handling etc) -->
+    <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras/dist/xrextras.js"></script>
   </head>
   <body>
-    <!-- 8th Wall engine loaded first via CDN -->
-    <script src="https://cdn.8thwall.com/web/xrextras/xrextras.js"></script>
-    <script src="https://apps.8thwall.com/xrweb?appKey=YOUR_APP_KEY"></script>
-
-    <!-- Your app -->
     <script type="module" src="/src/app.js"></script>
   </body>
 </html>
