@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  server: {
+  base: '/my-ar-app/',
+    server: {
     https: true,
     host: true
   },
